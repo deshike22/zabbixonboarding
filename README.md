@@ -23,8 +23,8 @@ Onboarding large no of servers to Zabbix using Google spreadsheet
 ## Configuration
 ### Configuring Google Spreadsheet
 Create a new Google spreadsheet with following information
-Spreadsheet Name = Servers
-Sheet Name = Sheet1
+* Spreadsheet Name : Servers
+* Sheet Name : Sheet1
 
 | hostname | ip | dns | os | environment | product | sub system | {$SERVICES} | status | onboarding status |
 |----------|----|-----|----|-------------|---------|------------|--------|--------|-------------------|
