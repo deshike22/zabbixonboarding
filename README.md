@@ -28,7 +28,7 @@ Create a new Google spreadsheet with following information
 
 | hostname | ip | dns | os | environment | product | sub system | {$SERVICES} | status | onboarding status |
 |----------|----|-----|----|-------------|---------|------------|--------|--------|-------------------|
-| eg: server1  |10.1.1.1|server1.local|Linux|ERP|SD|httpd,mssql|add| |
+| eg: server1  |10.1.1.1|server1.local|Linux|production|ERP|SD|httpd,mssql|add| |
 
 ### Configuring oauth for Google
 
