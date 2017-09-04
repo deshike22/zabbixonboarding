@@ -1,5 +1,5 @@
 # zabbixonboarding
-Onboarding large no of servers to Zabbix using Google spreadsheet
+Onboarding large no of servers to Zabbix using Google spreadsheet. In this project there are four zabbix servers located in dc1, dc2, dc3, dc4 and a zabbix proxy in dn5. Hosts are located in all of the data centres and monitored via proxies to distribute load.
 
 ## Requirements
 * python 2.7
