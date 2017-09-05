@@ -2,7 +2,7 @@ import sys
 from zabbix_api import ZabbixAPI
 
 # List of zabbix Server urls
-server_dc1 = 'http://dc1zabbix.local'
+server_dc1 = 'http://192.168.99.100:32791'
 server_dc2 = 'http://dc2zabbix.local'
 server_dc3 = 'http://dc3zabbix.local'
 server_dc4 = 'http://dc4zabbix.local'
@@ -10,7 +10,7 @@ server_dc4 = 'http://dc4zabbix.local'
 
 # A common username and password for all zabbix instances
 username = 'Admin'
-password = 'zabbixpwd'
+password = 'zabbix'
 
 # Function to authenticate Zabbix using the credentials provided
 def zabbix_auth(server, username, password):

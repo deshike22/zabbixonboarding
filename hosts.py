@@ -102,12 +102,6 @@ def update_host(i, INFO, zapi, worksheet):
             "groupid": create_group(group, zapi)} for group in INFO['groups'] if group],
         "templates": [{
             "templateid": create_template('os', INFO['templates']['os'], zapi)}],
-        "inventory_mode": 0,
-        "inventory": {
-            "os_short": INFO['inv_os'],
-            "tag": INFO['inv_tag'],
-            "contact": INFO['inv_contact'],
-            "notes": INFO['remarks']},
         "macros": macro_params,
         "status": 1 if 'Decommissioned' in INFO['groups'] else 0}
     try:

@@ -6,7 +6,8 @@ HOSTINFO = {
     'dns': '',
     'groups': [],
     'templates': {
-        'os': ''
+        'os': '',
+        'services': ''
     },
     'isagent': 'yes',
     'proxy': '',
