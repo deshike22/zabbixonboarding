@@ -1,5 +1,4 @@
 HOSTINFO = {
-    'isAgent': '',
     'location': '',
     'hostname': '',
     'hostid': '',
