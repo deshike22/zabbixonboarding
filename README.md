@@ -27,9 +27,9 @@ Create a new Google spreadsheet with following information
 * Spreadsheet Name : Servers
 * Sheet Name : Sheet1
 
-| hostname | ip | dns | os | environment | product | sub system | {$SERVICES} | status | onboarding status |
-|----------|----|-----|----|-------------|---------|------------|--------|--------|-------------------|
-| eg: server1  |10.1.1.1|server1.local|Linux|production|ERP|SD|httpd,mssql|add| |
+| hostname | ip | dns | location | os | environment | product | sub system | {$SERVICES} | isAgent | status | onboarding status |
+|----------|----|-----|----------|----|-------------|---------|------------|-------------|---------|--------|-------------------|
+| eg: server1  |10.1.1.1|server1.local|dc1|Linux|production|ERP|SD|httpd,mssql|yes|add| |
 
 ### Configuring oauth for Google
 
