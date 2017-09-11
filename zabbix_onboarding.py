@@ -8,7 +8,7 @@ from infotemplate import HOSTINFO
 import hosts
 
 # Server information Google spreadsheet details
-GoogleSpreadsheetURL = 'https://docs.google.com/spreadsheets/d/1uIXEphjKbMM7D6KL9oSPkE63boL9yJJPFUKPxta7X4w/edit'
+GoogleSpreadsheetURL = ''
 GoogleSheetName = 'servers'
 
 worksheet, values_list = spreadsheetdata(GoogleSpreadsheetURL, GoogleSheetName)
