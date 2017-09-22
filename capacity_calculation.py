@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+"""This script will calculate the storage capacity required for a Zabbix installation in a large environment"""
 class Capacity(object):
     def __init__(self,
                  hosts,
@@ -11,15 +11,18 @@ class Capacity(object):
                  history_period,
                  trend_period,
                  events_freq):
-        self.hosts = hosts
-        self.items_per_host = items_per_host
-        self.monitor_frequency = monitor_frequency
-        self.history_item_size = history_item_size
-        self.trend_item_size = trend_item_size
-        self.event_size = event_size
-        self.history_period = history_period
-        self.trend_period = trend_period
-        self.events = events_freq
+        try:
+            self.hosts = int(hosts)
+            self.items_per_host = int(items_per_host)
+            self.monitor_frequency = int(monitor_frequency)
+            self.history_item_size = int(history_item_size)
+            self.trend_item_size = int(trend_item_size)
+            self.event_size = int(event_size)
+            self.history_period = int(history_period)
+            self.trend_period = int(trend_period)
+            self.events = int(events_freq)
+        except ValueError, AttributeError:
+            print "Wrong input values entered or missing information", ValueError, AttributeError
 
     def nvps(self):
         vps = (self.hosts * self.items_per_host) / self.monitor_frequency
@@ -43,8 +46,17 @@ class Capacity(object):
 
 
 if __name__ == '__main__':
-    site1 = Capacity(5000, 50, 60, 50, 128, 130, 15, 365, 1)
+    site1 = Capacity(
+        raw_input('No of hosts to monitor:'),
+        raw_input('No of monitors per host:'),
+        raw_input('Monitor frequency(seconds):'),
+        raw_input('Average size of a historical data receieved (Default = 50B):') or 50,
+        raw_input('Average size of a trend data (Default = 128B):') or 128,
+        raw_input('Average size of a event data (Default = 130B):') or 130,
+        raw_input('Historical data retention period(days):'),
+        raw_input('Trend data retention period(days):'),
+        raw_input('No of events per second(Default = 1):') or 1)
 
+    print ""
     print "New Values per Second = ", site1.nvps()
-
-    print "Database size for history and trend data = ", site1.dbsize() / (1024 * 1024 * 1024), "GB"
+    print "Database size for history, trend and events data = ", site1.dbsize() / (1024 * 1024 * 1024), "GB"
