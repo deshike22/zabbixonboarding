@@ -1,28 +1,20 @@
 #!/usr/bin/python
 """This script will calculate the storage capacity required for a Zabbix installation in a large environment"""
 class Capacity(object):
-    def __init__(self,
-                 hosts,
-                 items_per_host,
-                 monitor_frequency,
-                 history_item_size,
-                 trend_item_size,
-                 event_size,
-                 history_period,
-                 trend_period,
-                 events_freq):
+    def __init__(self):
         try:
-            self.hosts = int(hosts)
-            self.items_per_host = int(items_per_host)
-            self.monitor_frequency = int(monitor_frequency)
-            self.history_item_size = int(history_item_size)
-            self.trend_item_size = int(trend_item_size)
-            self.event_size = int(event_size)
-            self.history_period = int(history_period)
-            self.trend_period = int(trend_period)
-            self.events = int(events_freq)
-        except ValueError, AttributeError:
-            print "Wrong input values entered or missing information", ValueError, AttributeError
+            self.hosts = int(raw_input('No of hosts to monitor:'))
+            self.items_per_host = int(raw_input('No of monitors per host:'))
+            self.monitor_frequency = int(raw_input('Monitor frequency(seconds):'))
+            self.history_item_size = int(
+                raw_input('Average size of a historical data receieved (Default = 50B):') or 50)
+            self.trend_item_size = int(raw_input('Average size of a trend data (Default = 128B):') or 128)
+            self.event_size = int(raw_input('Average size of a event data (Default = 130B):') or 130)
+            self.history_period = int(raw_input('Historical data retention period(days):'))
+            self.trend_period = int(raw_input('Trend data retention period(days):'))
+            self.events = int(raw_input('No of events per second(Default = 1):') or 1)
+        except:
+            print "Wrong input values entered or missing information"
 
     def nvps(self):
         vps = (self.hosts * self.items_per_host) / self.monitor_frequency
@@ -46,17 +38,7 @@ class Capacity(object):
 
 
 if __name__ == '__main__':
-    site1 = Capacity(
-        raw_input('No of hosts to monitor:'),
-        raw_input('No of monitors per host:'),
-        raw_input('Monitor frequency(seconds):'),
-        raw_input('Average size of a historical data receieved (Default = 50B):') or 50,
-        raw_input('Average size of a trend data (Default = 128B):') or 128,
-        raw_input('Average size of a event data (Default = 130B):') or 130,
-        raw_input('Historical data retention period(days):'),
-        raw_input('Trend data retention period(days):'),
-        raw_input('No of events per second(Default = 1):') or 1)
-
+    site1 = Capacity()
     print ""
     print "New Values per Second = ", site1.nvps()
     print "Database size for history, trend and events data = ", site1.dbsize() / (1024 * 1024 * 1024), "GB"
