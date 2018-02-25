@@ -2,14 +2,13 @@
 
 """Zabbix services is a powerfull feature although it is not considered in many implementation. The structure of the view will be LOB > APP > ENV > Component > Server > Triggers(with SLA tag). Please read autoregisterscript description to identify the structure information. This script need to test. This script can be linked to a template item(daily update interval) and apply to all hosts. It requires hostname as arguement."""
 
-import sys
 import json
 import copy
 from sys import argv
 from zabbixauth import serverassigned
 import time
 
-hostname = sys.argv[1]
+hostname = argv[1]
 zapi = serverassigned('dc1')
 
 # Function to find metadata information from invetory section.
