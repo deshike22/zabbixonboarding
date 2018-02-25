@@ -1,0 +1,138 @@
+#!/usr/bin/python
+
+"""Zabbix services is a powerfull feature although it is not considered in many implementation. The structure of the view will be LOB > APP > ENV > Component > Server > Triggers(with SLA tag). Please read autoregisterscript description to identify the structure information. This script need to test. This script can be linked to a template item(daily update interval) and apply to all hosts. It requires hostname as arguement."""
+
+import sys
+import json
+import copy
+from sys import argv
+from zabbixauth import serverassigned
+import time
+
+hostname = sys.argv[1]
+zapi = serverassigned('dc1')
+
+# Function to find metadata information from invetory section.
+# Templates are created with automatic inventory for system.metadata key
+def findmetadata(zapi, hostname):
+    hostmetadata = zapi.host.get({
+        "filter": {
+            "host": [hostname]
+        },
+        "selectInventory": ["notes"]
+    })[0]['inventory']['notes']
+    return hostmetadata
+
+# Function to convert hostname to hostid
+def gethostid(zapi, name):
+    hostid = zapi.host.get({
+        "name": name,
+        "output": "extend"
+    })[0]['hostid']
+    return hostid
+
+# Function to convert servicename to serviceid
+def getserviceid(zapi, servicename):
+    serviceid = zapi.service.get({
+        "output": "extend",
+        "selectDependencies": "extend",
+        "filter": {"name": [servicename] }
+    })[0]['serviceid']
+    return serviceid
+
+
+# Function to find triggers configured for the hostname based on the TAG information
+def findtrigger(zapi, host, tag):
+    triggers = zapi.trigger.get({
+        "output": "extend",
+        "host": host,
+        "expandDescription":True,
+        "selectTags": "extend",
+## Following method is not introduced in Zabbix 3.4.4. Therefore iterating over tag values is written below.
+#        "filter": {
+#            "tags":[{
+#                "tag":tag,
+#                "value": ""
+#            }]
+#        }
+
+    })
+    tagtriggers = []
+    for trigger in triggers:
+        j = {}
+        try:
+            if trigger['tags'][0]['tag'] == tag:
+                j['triggerid'] = trigger['triggerid']
+                j['description'] = trigger['description']
+                tagtriggers.append(j)
+        except:
+            continue
+    return tagtriggers
+
+
+# Function to add IT services
+def additservice(zapi,parentservice,service,sla,algorithm,triggerid):
+    if parentservice == "root":
+        parentserviceid = 0
+    try:
+        serviceid = zapi.service.update({
+            "serviceid": getserviceid(zapi,service),
+            "parentid": getserviceid(zapi,parentservice)
+        })['serviceids'][0]
+    except:
+        serviceid = zapi.service.create({
+            "name": service,
+            "parentid": getserviceid(zapi,parentservice),
+            "algorithm": algorithm,
+            "showsla": 1,
+            "triggerid": triggerid,
+            "goodsla": sla,
+            "sortorder": 1
+        })['serviceids'][0]
+    return serviceid
+
+# find metadata information from host inventory
+metadata = json.loads(findmetadata(zapi, hostname))
+
+# Add/update LOB level service
+print "add/update LOB view"
+parentservice = "LOB View"
+newservice = metadata['LOB']
+serviceid = additservice(zapi,parentservice,newservice,99.99,1,0)
+print "LOB view serviceid",serviceid
+
+# Add/update APP level service
+print "add/update App view"
+parentservice = newservice
+newservice =  newservice + "/" + metadata['APP']
+serviceid = additservice(zapi,parentservice,newservice,99.99,1,0)
+print "App view serviceid",serviceid
+
+# Add/update ENV level service
+print "add/update Environment view"
+parentservice = newservice
+newservice = newservice + "/" + metadata['ENV']
+serviceid = additservice(zapi,parentservice,newservice,99.99,1,0)
+print "Environment view serviceid",serviceid
+
+# Add/update TYPE level service
+print "add/update Component(server TYPE) view"
+parentservice = newservice
+newservice = newservice + "/" + metadata['TYPE'][0]
+serviceid = additservice(zapi,parentservice,newservice,99.99,1,0)
+print "Component(server TYPE) view serviceid",serviceid
+
+# Add/update servers to TYPE's
+print "add/update servers to Component(server TYPE) view"
+parentservice = newservice
+newservice = hostname
+serviceid = additservice(zapi,parentservice,newservice,99.99,1,0)
+print "Server: '" + hostname  + "' view serviceid" + serviceid
+
+# Add/update triggers to servers
+print "add/update triggers tagged with 'SLA' to servers"
+for trigger in findtrigger(zapi,hostname,"SLA"):
+    servicename =  hostname + ":" + trigger['description']
+    serviceid = additservice(zapi,hostname,servicename,99.99,1,trigger['triggerid'])
+#print "Server: '" + hostname  + "' added with triggers" + triggername
+
