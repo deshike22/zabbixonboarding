@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-"""This is script is written for registering zabbix agent hosts in zabbix server based on {HOST.METADATA} information passed during autoregister action created in Zabbix frontend. When dealing with large implementation there are important attributes to consider when registering hosts. A host can be related to a line of business, application, environment, subcomponet etc. With Zabbix 3.2 nested grouping structure can be created to easily identify these layout. However, built in Zabbix autoregistering can not cope up with large number of hostgroup strucutre as it may need to create rules for every combination. Instead this approach will place a metadata information while the agents are deployed as shown below. This can be passed to HostmetadataItem in the agent and will pass it to the Zabbix auto registering action.
+"""This script is written for registering zabbix agent hosts in zabbix server based on {HOST.METADATA} information passed during autoregister action created in Zabbix frontend. When dealing with large implementation there are important attributes to consider when registering hosts. A host can be related to a line of business, application, environment, subcomponet etc. With Zabbix 3.2 nested grouping structure can be created to easily identify these layout. However, built in Zabbix autoregistering can not cope up with large number of hostgroup strucutre as it may need to create rules for every combination. Instead this approach will place a metadata information while the agents are deployed as shown below. This can be passed to HostmetadataItem in the agent and will pass it to the Zabbix auto registering action.
 
-eg: {"TYPE":[""],"APP":"PC","ENV":"SIT1","OS":"Windows","SW":["IIS","MSSQL"],"LOB":"Manufacturing"}
+eg: {"TYPE":["DB"],"APP":"Application1","ENV":"DEV","OS":"Windows","SW":["IIS","MSSQL"],"LOB":"Manufacturing"}
 
 Note: TYPE and SW will take multiple attributes. You can change in the code for your requirement. OS and SW will determine which templates to apply.
 """
@@ -18,11 +18,6 @@ metadata = json.loads(argv[1])
 hostname = sys.argv[2]
 hostip = sys.argv[3]
 zapi = serverassigned('dc1') #add the relevant dc based on zabbixauth
-
-# Following values are used for testing purposes only.
-#metadata = {"TYPE":[""],"APP":"PC","ENV":"SIT1","OS":"Windows","SW":["IIS","MSSQL"]}
-#hostname = "Test host"
-#hostip = "127.0.0.10"
 
 # Function to convert hostname to hostid
 def gethostid(zapi, name):
