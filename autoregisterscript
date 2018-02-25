@@ -7,7 +7,6 @@ eg: {"TYPE":["DB"],"APP":"Application1","ENV":"DEV","OS":"Windows","SW":["IIS","
 Note: TYPE and SW will take multiple attributes. You can change in the code for your requirement. OS and SW will determine which templates to apply.
 """
 
-import sys
 import json
 import copy
 from sys import argv
@@ -15,8 +14,8 @@ from zabbixauth import serverassigned
 import time
 
 metadata = json.loads(argv[1])
-hostname = sys.argv[2]
-hostip = sys.argv[3]
+hostname = argv[2]
+hostip = argv[3]
 zapi = serverassigned('dc1') #add the relevant dc based on zabbixauth
 
 # Function to convert hostname to hostid
