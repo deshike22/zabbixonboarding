@@ -1,0 +1,193 @@
+#!/usr/bin/python
+
+"""This is script is written for registering zabbix agent hosts in zabbix server based on {HOST.METADATA} information passed during autoregister action created in Zabbix frontend. When dealing with large implementation there are important attributes to consider when registering hosts. A host can be related to a line of business, application, environment, subcomponet etc. With Zabbix 3.2 nested grouping structure can be created to easily identify these layout. However, built in Zabbix autoregistering can not cope up with large number of hostgroup strucutre as it may need to create rules for every combination. Instead this approach will place a metadata information while the agents are deployed as shown below. This can be passed to HostmetadataItem in the agent and will pass it to the Zabbix auto registering action.
+
+eg: {"TYPE":[""],"APP":"PC","ENV":"SIT1","OS":"Windows","SW":["IIS","MSSQL"],"LOB":"Manufacturing"}
+
+Note: TYPE and SW will take multiple attributes. You can change in the code for your requirement. OS and SW will determine which templates to apply.
+"""
+
+import sys
+import json
+import copy
+from sys import argv
+from zabbixauth import serverassigned
+import time
+
+metadata = json.loads(argv[1])
+hostname = sys.argv[2]
+hostip = sys.argv[3]
+zapi = serverassigned('dc1') #add the relevant dc based on zabbixauth
+
+# Following values are used for testing purposes only.
+#metadata = {"TYPE":[""],"APP":"PC","ENV":"SIT1","OS":"Windows","SW":["IIS","MSSQL"]}
+#hostname = "Test host"
+#hostip = "127.0.0.10"
+
+# Function to convert hostname to hostid
+def gethostid(zapi, name):
+    hostid = zapi.host.get({
+        "name": name,
+        "output": "extend"
+    })[0]['hostid']
+    return hostid
+
+
+# Function will return hostgroupid if exists else create new hostgroups and return ids
+def gethostgroupids(zapi, group):
+    try:
+        groupid = zapi.hostgroup.get({"output": ["groupid"],"filter":{"name":[group]}})[0]['groupid']
+        print "host groups already exists"
+    except:
+        groupid = zapi.hostgroup.create({"name": group})['groupids']
+        print "new group created"
+    print groupid
+    return groupid
+
+
+# Function will define the nested hostgroup structure based on the metadata information provided
+def getgroupnames(metadata):
+    i = []
+    for v in metadata["TYPE"]:
+        j = []
+        j.append(metadata["LOB"])
+        j.append(metadata["LOB"]+"/"+metadata["APP"])
+        j.append(metadata["LOB"]+"/"+metadata["APP"]+"/"+metadata["ENV"])
+        j.append(metadata["LOB"]+"/"+metadata["APP"]+"/"+metadata["ENV"]+"/"+v) 
+        i.append(j)
+
+    for v in metadata["SW"]:
+        if len(v) > 0:
+            i.append(v)
+        else:
+            continue
+    i.append(metadata["OS"]+" servers")
+    print i
+    return i
+
+
+# Fucntion will convert hostgroupnames to hostgroupids
+def convertogroupids(zapi, groupnames):
+    print "converting to groupids",groupnames
+    m = []
+    for mx in groupnames:
+        if type(mx) is list:
+            for nx in mx:
+                n = []
+                print "Creating nested group",nx
+                gid = gethostgroupids(zapi, nx)
+                n.append(gid)
+            m.append(n[-1])
+        else:
+            print "Creating other group",mx
+            gid = gethostgroupids(zapi, mx)
+            m.append(gid)
+    return m
+
+
+# Function will update host with groupids and templateids  
+def updatehost(zapi, metadata, hostid, groupids, templateids):
+    zapi.host.update({
+        "hostid": hostid,
+        "groups": [{
+            "groupid": gids} for gids in groupids ],
+        "inventory_mode": 1,
+        "templates": [{
+            "templateid": tids} for tids in templateids ]
+    })
+    print "updated "+hostid+" successfully"    
+
+
+# Function will add new host to with relevant group and template information    
+def addhost(zapi, hostname, hostip, groupids, templateids):
+    print "groupids associating to host",groupids
+    zapi.host.create({
+        "host": hostname,
+        "interfaces": [
+            {
+                "type": 1,
+                "main": 1,
+                "useip": 1,
+                "ip": hostip,
+                "dns": "",
+                "port": "10050"
+            }],
+        "groups": [{
+            "groupid": gids} for gids in groupids ],
+        "inventory_mode": 1,
+        "templates": [{
+            "templateid": tids} for tids in templateids ]
+     })
+
+
+# This function is currently not in use. It can be used to add multiple hosts to a hostgroup
+def addhosttogroups(zapi, groupids, hostid):
+    for id in groupids:
+        zapi.hostgroup.massadd({
+            "groups": [{
+                "groupid": id
+            }],
+            "hosts": [{
+                "hostid": hostid
+            }]
+        })
+
+
+# Function will define the template names based on the metadata and convert them to templateids.
+def gettemplateids(zapi,metadata):
+    templates = []
+    templateids = []
+    if metadata["OS"].lower() == "windows":
+        os_template = "Template OS Windows"
+        templates.append(os_template)
+    if metadata["OS"].lower() == "linux":
+        os_template = "Template OS Linux"
+        templates.append(os_template)
+    if  metadata["OS"].lower() == "aix":
+        os_template = "Template OS AIX"
+        templates.append(os_template)
+    if metadata["OS"].lower() == "solaris":
+        os_template = "Template OS Solaris"
+        templates.append(os_template)
+    for v in metadata["SW"]:
+        if len(v) > 0:
+            if v.lower() == "iis":
+                sw_template = "Template Microsoft IIS"
+                templates.append(sw_template)
+            if v.lower() == "mssql":
+                sw_template = "Template MSSQL"
+                templates.append(sw_template)
+            if v.lower() == "oracle":
+                sw_template = "Template ORACLE"
+                templates.append(sw_template)
+            if v.lower() == "sybase":
+                sw_template = "Template SYBASE"
+                templates.append(sw_template)
+            else:
+                continue
+    for item in templates:
+        try:
+            templateid = zapi.template.get({
+                "output": "extend",
+                "filter": {
+                    "host": [item]
+                    }
+            })[0]["templateid"]         
+            templateids.append(templateid)
+        except:
+            "template "+item+" not found. Skippping ..."
+    print "Template ids ",templateids
+    return templateids
+
+
+
+print "updating host ",hostname
+groupnames = getgroupnames(metadata)
+groupids = convertogroupids(zapi, groupnames)
+templateids = gettemplateids(zapi, metadata)
+print templateids
+try:
+    addhost(zapi, hostname, hostip, groupids, templateids)
+except:
+    hostid = gethostid(zapi, hostname)
+    updatehost(zapi, metadata, hostid, groupids, templateids)
